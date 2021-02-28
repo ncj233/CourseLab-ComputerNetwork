@@ -12,9 +12,15 @@ void DUMMY_CODE(Targs &&... /* unused */) {}
 
 using namespace std;
 
-ByteStream::ByteStream(const size_t capacity_sd): 
-    buffer(capacity_sd+1), capacity(capacity_sd), buf_len(capacity_sd+1), head(0),
-    tail(0), iseof(false), b_read(0), b_written(0) {}
+ByteStream::ByteStream(const size_t capacity_sd)
+    : buffer(capacity_sd + 1)
+    , capacity(capacity_sd)
+    , buf_len(capacity_sd + 1)
+    , head(0)
+    , tail(0)
+    , iseof(false)
+    , b_read(0)
+    , b_written(0) {}
 
 size_t ByteStream::write(const string &data) {
     if (iseof) {
@@ -22,8 +28,8 @@ size_t ByteStream::write(const string &data) {
     }
 
     size_t written = 0;
-    for (const char c: data) {
-        if ((tail+1)%buf_len != head) {
+    for (const char c : data) {
+        if ((tail + 1) % buf_len != head) {
             buffer[tail++] = c;
             tail %= buf_len;
             written++;
@@ -72,35 +78,19 @@ std::string ByteStream::read(const size_t len) {
     return r;
 }
 
-void ByteStream::end_input() {
-    iseof = true;
-}
+void ByteStream::end_input() { iseof = true; }
 
 //! 'true' if the stream input has ended
-bool ByteStream::input_ended() const {
-    return iseof;
-}
+bool ByteStream::input_ended() const { return iseof; }
 
-size_t ByteStream::buffer_size() const {
-    return head <= tail? tail-head: tail+buf_len-head;
-}
+size_t ByteStream::buffer_size() const { return head <= tail ? tail - head : tail + buf_len - head; }
 
-bool ByteStream::buffer_empty() const {
-    return tail == head;
-}
+bool ByteStream::buffer_empty() const { return tail == head; }
 
-bool ByteStream::eof() const {
-    return buffer_empty() && input_ended();
-}
+bool ByteStream::eof() const { return buffer_empty() && input_ended(); }
 
-size_t ByteStream::bytes_written() const {
-    return b_written;
-}
+size_t ByteStream::bytes_written() const { return b_written; }
 
-size_t ByteStream::bytes_read() const {
-    return b_read;
-}
+size_t ByteStream::bytes_read() const { return b_read; }
 
-size_t ByteStream::remaining_capacity() const {
-    return capacity - buffer_size();
-}
+size_t ByteStream::remaining_capacity() const { return capacity - buffer_size(); }
