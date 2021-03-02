@@ -4,16 +4,33 @@
 #include "byte_stream.hh"
 
 #include <cstdint>
+#include <list>
 #include <string>
+#include <vector>
 
 //! \brief A class that assembles a series of excerpts from a byte stream (possibly out of order,
 //! possibly overlapping) into an in-order byte stream.
 class StreamReassembler {
   private:
     // Your code here -- add private members as necessary.
+    std::vector<uint8_t> buffer;
+    size_t head;
+    size_t assembled_index;
+    size_t head_index;
+
+    std::list<std::pair<size_t, size_t>> unassembled_list;
+    bool detect_eof;
+    size_t eof_index;
 
     ByteStream _output;  //!< The reassembled in-order byte stream
     size_t _capacity;    //!< The maximum number of bytes
+
+    // private functions
+    size_t acceptable_last_index() const { return head_index + _capacity; }
+    bool substring_contains_in_unassembled_list(const size_t index, const size_t str_len) const;
+    size_t index2off(const size_t index) const;
+    bool is_overlap(const size_t s1, const size_t e1, const size_t s2, const size_t e2) const;
+    std::string pop_string(const size_t length);
 
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
