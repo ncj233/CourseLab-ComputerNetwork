@@ -26,7 +26,6 @@ class StreamReassembler {
     size_t _capacity;    //!< The maximum number of bytes
 
     // private functions
-    size_t acceptable_last_index() const { return head_index + _capacity; }
     bool substring_contains_in_unassembled_list(const size_t index, const size_t str_len) const;
     size_t index2off(const size_t index) const;
     bool is_overlap(const size_t s1, const size_t e1, const size_t s2, const size_t e2) const;
@@ -63,6 +62,10 @@ class StreamReassembler {
     //! \brief Is the internal state empty (other than the output stream)?
     //! \returns `true` if no substrings are waiting to be assembled
     bool empty() const;
+
+    // my pubilc
+    size_t acceptable_last_index() const { return head_index + _capacity; }
+    size_t get_assembled_index() const { return assembled_index; }
 };
 
 #endif  // SPONGE_LIBSPONGE_STREAM_REASSEMBLER_HH
