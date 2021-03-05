@@ -64,7 +64,7 @@ class StreamReassembler {
     bool empty() const;
 
     // my pubilc
-    size_t acceptable_last_index() const { return head_index + _capacity; }
+    size_t acceptable_last_index() const { return _output.bytes_read() + _capacity; }
     size_t get_assembled_index() const { return assembled_index; }
 };
 

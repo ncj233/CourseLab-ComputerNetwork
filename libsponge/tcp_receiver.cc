@@ -43,7 +43,7 @@ optional<WrappingInt32> TCPReceiver::ackno() const {
 
 size_t TCPReceiver::window_size() const {
     if (!stream_out().input_ended()) {
-        return _capacity - stream_out().buffer_size();
+        return _reassembler.acceptable_last_index() - _reassembler.get_assembled_index();
     } else {
         return 0;
     }
