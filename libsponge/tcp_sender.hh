@@ -8,6 +8,57 @@
 
 #include <functional>
 #include <queue>
+#include <iostream>
+
+class RetransTimer {
+  private:
+    const uint32_t _initial_retransmission_timout;
+    uint32_t _retrans_timeout;  // RTO
+    uint32_t _retrans_count;    // count of "consecutive retransmissions"
+
+    bool _running;
+    uint32_t _time_left;
+    bool _need_back_off_rto;
+
+  public:
+    RetransTimer(const uint32_t initial_timeout)
+        : _initial_retransmission_timout(initial_timeout)
+        , _retrans_timeout(0)
+        , _retrans_count(0)
+        , _running(false)
+        , _time_left(0)
+        , _need_back_off_rto(true) {
+          std::cout << initial_timeout << std::endl;
+        }
+
+    void init(bool need_back_off_rto = true) {
+        _retrans_timeout = _initial_retransmission_timout;
+        _retrans_count = 0;
+        _running = true;
+        _time_left = _retrans_timeout;
+        _need_back_off_rto = need_back_off_rto;
+    }
+
+    void consume(const uint32_t time) {
+        if (_running) {
+            _time_left = _time_left > time ? _time_left - time : 0;
+        }
+    }
+
+    void restart() {
+        if (_running) {
+            _retrans_count++;
+            if (_need_back_off_rto) _retrans_timeout *= 2;
+            _time_left = _retrans_timeout;
+        }
+    }
+
+    void close() { _running = false; }
+
+    bool is_alarm() const { return _running && !_time_left; }
+    bool is_running() const { return _running; }
+    uint32_t get_retransmission_count() const { return _retrans_count; }
+};
 
 //! \brief The "sender" part of a TCP implementation.
 
@@ -31,6 +82,17 @@ class TCPSender {
 
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
+
+    // my private variables
+    RetransTimer _timer;
+    std::queue<TCPSegment> _outstanding_segments{};
+    uint64_t _last_ackno;
+    uint64_t _last_windowsize;
+    bool _FIN_setted;
+
+    // my private functions
+    void send_tcpsegment(const TCPSegment &segment, bool need_back_off_rto = true);
+    void resend_tcpsegment();
 
   public:
     //! Initialize a TCPSender
