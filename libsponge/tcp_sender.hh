@@ -8,7 +8,6 @@
 
 #include <functional>
 #include <queue>
-#include <iostream>
 
 class RetransTimer {
   private:
@@ -27,9 +26,7 @@ class RetransTimer {
         , _retrans_count(0)
         , _running(false)
         , _time_left(0)
-        , _need_back_off_rto(true) {
-          std::cout << initial_timeout << std::endl;
-        }
+        , _need_back_off_rto(true) {}
 
     void init(bool need_back_off_rto = true) {
         _retrans_timeout = _initial_retransmission_timout;
@@ -48,7 +45,8 @@ class RetransTimer {
     void restart() {
         if (_running) {
             _retrans_count++;
-            if (_need_back_off_rto) _retrans_timeout *= 2;
+            if (_need_back_off_rto)
+                _retrans_timeout *= 2;
             _time_left = _retrans_timeout;
         }
     }
@@ -114,6 +112,8 @@ class TCPSender {
 
     //! \brief Generate an empty-payload segment (useful for creating empty ACK segments)
     void send_empty_segment();
+    // my public function
+    void send_rst_segment();
 
     //! \brief create and send segments to fill as much of the window as possible
     void fill_window();
@@ -149,6 +149,8 @@ class TCPSender {
     //! \brief relative seqno for the next byte to be sent
     WrappingInt32 next_seqno() const { return wrap(_next_seqno, _isn); }
     //!@}
+
+    bool fin_setted() const { return _FIN_setted; }
 };
 
 #endif  // SPONGE_LIBSPONGE_TCP_SENDER_HH

@@ -33,7 +33,7 @@ uint64_t TCPSender::bytes_in_flight() const {
 
 void TCPSender::fill_window() {
     bool ahead = _last_ackno + _last_windowsize < _next_seqno;
-    uint64_t window_left = ahead? 0: _last_ackno + _last_windowsize - _next_seqno;
+    uint64_t window_left = ahead ? 0 : _last_ackno + _last_windowsize - _next_seqno;
 
     // _last_windowsize == 0?
     if ((_stream.buffer_size() > 0 || (!_FIN_setted && _stream.eof())) && _last_windowsize == 0 && !ahead) {
@@ -108,6 +108,11 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
         return;
     }
 
+    // Impossible ackno (beyond next seqno) is ignored
+    if (recv_ackno > _next_seqno) {
+        return;
+    }
+
     _last_ackno = recv_ackno;
     _last_windowsize = window_size;
 
@@ -145,6 +150,13 @@ unsigned int TCPSender::consecutive_retransmissions() const { return _timer.get_
 
 void TCPSender::send_empty_segment() {
     TCPSegment segment;
+    segment.header().seqno = next_seqno();
+    _segments_out.push(segment);
+}
+
+void TCPSender::send_rst_segment() {
+    TCPSegment segment;
+    segment.header().rst = 1;
     segment.header().seqno = next_seqno();
     _segments_out.push(segment);
 }

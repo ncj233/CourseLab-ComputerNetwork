@@ -16,10 +16,20 @@ class TCPConnection {
     //! outbound queue of segments that the TCPConnection wants sent
     std::queue<TCPSegment> _segments_out{};
 
+    // my private member
+    size_t _time_since_last_segment_received{0};
+    size_t _linger_time{0};
+
     //! Should the TCPConnection stay active (and keep ACKing)
     //! for 10 * _cfg.rt_timeout milliseconds after both streams have ended,
     //! in case the remote TCPConnection doesn't know we've received its whole stream?
     bool _linger_after_streams_finish{true};
+
+    bool _stream_finish() const {
+        return _sender.fin_setted() && bytes_in_flight() == 0 && _receiver.stream_out().input_ended();
+    }
+    void _flush_segments_out();
+    void _rst();
 
   public:
     //! \name "Input" interface for the writer
