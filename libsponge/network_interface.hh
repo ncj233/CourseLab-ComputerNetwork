@@ -5,6 +5,7 @@
 #include "tcp_over_ip.hh"
 #include "tun.hh"
 
+#include <list>
 #include <optional>
 #include <queue>
 
@@ -29,6 +30,23 @@
 //! the network interface passes it up the stack. If it's an ARP
 //! request or reply, the network interface processes the frame
 //! and learns or replies as necessary.
+struct ARPMapping {
+    uint32_t ip;
+    EthernetAddress mac;
+    size_t time_stamp;
+
+    ARPMapping(const uint32_t _ip, const EthernetAddress &_mac, const size_t _time_stamp)
+        : ip(_ip), mac(_mac), time_stamp(_time_stamp) {}
+};
+
+struct ARPWaitingFrames {
+    uint32_t ip;
+    std::list<InternetDatagram> datagrams;
+    size_t time_stamp;
+
+    ARPWaitingFrames(const uint32_t _ip, const size_t _time_stamp) : ip(_ip), datagrams(), time_stamp(_time_stamp) {}
+};
+
 class NetworkInterface {
   private:
     //! Ethernet (known as hardware, network-access-layer, or link-layer) address of the interface
@@ -39,6 +57,30 @@ class NetworkInterface {
 
     //! outbound queue of Ethernet frames that the NetworkInterface wants sent
     std::queue<EthernetFrame> _frames_out{};
+
+    // my private variables
+    std::list<ARPMapping> _arp_map;
+
+    size_t _time_stamp_ms;
+
+    std::list<ARPWaitingFrames> _arp_waiting_frames_list{};
+
+    static constexpr size_t _ARP_EXPIRE_TIME = 30000;
+    static constexpr size_t _ARP_REQUEST_RESNED = 5000;
+
+    // my private functions
+    void _arp_update(const uint32_t ip, const EthernetAddress &mac);
+
+    std::optional<EthernetAddress> _arp_query(const uint32_t ip) const;
+
+    void _send_ethernet_frame(const EthernetAddress &dst,
+                              const EthernetAddress &src,
+                              const uint16_t type,
+                              const BufferList &payload);
+
+    void _broadcast_arp_request(const uint32_t ip);
+
+    void _arp_response(const uint32_t response_ip, const EthernetAddress &response_mac);
 
   public:
     //! \brief Construct a network interface with given Ethernet (network-access-layer) and IP (internet-layer) addresses
